@@ -98,7 +98,6 @@ class StrIncr(str):
         self.back_part = ''
         self.front_part = ''
         self.input_checked = False
-        self.input_valid = False
     
     
     def get_mappingN2S(self):
@@ -120,11 +119,10 @@ class StrIncr(str):
                 print '-- INPUT ERROR (%d): \' %s\'(\'%s\', index:%d) not in tokens(base%d): [\'%s\'] ' % (count, aStr, v, i, self.base, self.tokens)
                 print '---------------------------------------------------------'
                 is_valid = False
-        self.input_valid = is_valid
         return is_valid
 
-
-    def incr(self, aStr):
+    # 
+    def incr2(self, aStr):
         ''' increment the string: 'aStr' '''
         
         # check input ?
@@ -146,17 +144,61 @@ class StrIncr(str):
 
             if self.front_part is '':     # the very-first char, increment, like ' 9 + 1 ==> 10 ', ' y + 1 ==> 3'
                 self.front_part = self.tokens[0]
-                new_str = self.front_part + self.back_part
-                self.clear()
-                return new_str
+#                new_str = self.front_part + self.back_part
+#                self.clear()
+#                return new_str
             else:
                 return self.incr(self.front_part)
+
         else:
             last_char = self.mappingN2S[new_index]
             self.back_part = last_char + self.back_part
+        new_str = self.front_part + self.back_part
+        self.clear()
+        return new_str
+
+
+    # improve readability.
+    def incr(self, aStr):
+        ''' increment the string: 'aStr' '''
+        
+        # 1. check input
+        if not self.is_valid_input(aStr):
+            print '======================================================'
+            print 'INPUT_ERROR:  Please check your input string !'
+            print ' ** I will *NOT CHANGE* your input, just return it ** '
+            print '======================================================'
+            return aStr
+        
+        # 2. increment recursively.
+        def _incr(_str):
+            self.front_part = _str[:-1]
+            last_char = _str[-1]
+            new_index = self.mappingS2N[last_char] + 1
+
+            # if 'arithmetic carry' happens.( contray to 'arithmetic borrow': ( 20 - 7 = 13 ) )
+            # eg: base10 ==> 9 + 1 = 10
+            #     base30 ==> 'y' + 1 = '33'      (base30_tokens = '3456789abcdefghijkmnpqrstuvwxy')
+            # a round finished. eg: base30, flip over. 9+1(base10) turns over to '33'(base30), increment happens here 
+            if new_index >= len(self.tokens):   
+                last_char = self.tokens[0]   # last_char = tokens[first]
+                self.back_part = last_char + self.back_part
+
+                if self.front_part is '':     # the very-first char, increment, like ' 9 + 1 ==> 10 ', ' y + 1 ==> 3'
+                    self.front_part = self.tokens[0]
+                else:
+                    return _incr(self.front_part)   #!! don't forget 'return' when you use recurse.
+
+            else:
+                last_char = self.mappingN2S[new_index]
+                self.back_part = last_char + self.back_part
             new_str = self.front_part + self.back_part
             self.clear()
             return new_str
+        
+        # 3. return the result
+        return _incr(aStr)
+
 
     def clear(self):
         # resets
@@ -168,8 +210,9 @@ class StrIncr(str):
 if __name__ == '__main__':
     print ''
     b30 = StrIncr()
-#    s = 'ab7cyy'
-    s = 'yyya'
-    print b30.incr(s)
-    print b30.incr(s)
-    print '%s + 1 = %s' % (s, b30.incr(s))
+    lst = ['y', 'yya', 'ay', 'ab7cyy']
+    for i in lst:
+        print '--------------------------------'
+        print b30.incr(i)
+        print b30.incr(i)
+        print '%s + 1 = %s' % (s, b30.incr(i))
