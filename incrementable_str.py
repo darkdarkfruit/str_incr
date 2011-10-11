@@ -85,25 +85,14 @@ default_base_tokens = base30_tokens
 # debug = False
 debug = True
 
-class IncrementableStr(str):
+class StrIncr(str):
     ''' make a sequencial string can incr '''
     
-    def __init__(self, aStr, tokens=default_base_tokens):
-        self.aStr = aStr
-        self.tokens = tokens
-#        self.tokens = '3456789abcdefghijkmnpqrstuvwxy'
-        
-        # check if there is any char of aStr not in tokens
-        self.ERROR_INPUT = False
-        for i, v in enumerate(self.aStr):
-            if v not in self.tokens:
-                if debug:
-                    print '\n------------------ init error: ------------------------'
-                    print '-- INPUT ERROR:\' %s\'(\'%s\', index:%d) not in tokens: [\'%s\'] ' % (aStr, v, i, self.tokens)
-                    print '--              Please check your input string !'
-                    print '---------------------------------------------------------'
-                self.ERROR_INPUT = True
+    def __init__(self, tokens=default_base_tokens):
+        self.checked_input = False
 
+        self.tokens = tokens
+        self.base = len(self.tokens)
         self.mappingN2S = {}  # N2S : Number to Str
         self.mappingS2N = {}  # S2N : Str to Number
         for i,v in enumerate(self.tokens): 
@@ -118,51 +107,65 @@ class IncrementableStr(str):
     
     def get_mappingS2N(self):
         return self.mappingS2N
+
+    def is_valid_input(self, aStr):
+        ''' check if there is any char of aStr not in tokens '''
+        is_valid = True
+        count = 0
+        for i, v in enumerate(aStr):
+            if v not in self.tokens:
+                count += 1
+                print '-------------You are using base-%d ----------------------' % self.base
+                print '-- INPUT ERROR (%d): \' %s\'(\'%s\', index:%d) not in tokens(base%d): [\'%s\'] ' % (count, aStr, v, i, self.base, self.tokens)
+                print '---------------------------------------------------------'
+                is_valid = False
+        return is_valid
+
+
+    def incr(self, aStr):
+        ''' increment the string: 'aStr' '''
         
-    def incr(self):
-        ''' increment the str '''
+        # check input ?
+        if not self.checked_input:
+            if not self.is_valid_input(aStr):
+                print '======================================================'
+                print 'INPUT_ERROR:  Please check your input string !'
+                print ' ** I will *NOT CHANGE* your input, just return it ** '
+                print '======================================================'
+                return aStr
+            self.checked_input = True
 
-        # check input again
-        if self.ERROR_INPUT:
-            print '---------------------- incr error: ----------------------'
-            print '-- INPUT ERROR: This error should have occurred when you instantializing a string!'
-            print '--              At least one char of your input string is not in token: [\'%s\']' % self.tokens
-            print '--              Please check your input string !'
-            print '--              ** I will *not change* your input, just return it **'
-            print '---------------------------------------------------------'
-            return self.aStr
-
-        self.front_part = self.aStr[:-1]
-        back_part = ''
-        last_char = self.aStr[-1]
+        self.front_part = aStr[:-1]
+        last_char = aStr[-1]
         new_index = self.mappingS2N[last_char] + 1
         if new_index >= len(self.tokens):   # a round finished. base30, flip over. 30(base10) turns over to '3'(base30),   increment happens here 
             last_char = self.tokens[0]   # last_char = tokens[first]
             self.back_part = last_char + self.back_part
-            self.aStr = self.front_part
+#            self.aStr = self.front_part
             if self.front_part is '':     # the very-first char, increment, like ' 9 + 1 ==> 10 ', ' y + 1 ==> 3'
                 self.front_part = self.tokens[0]
             else:
-                self.incr()
+                self.incr(self.front_part)
         else:
             last_char = self.mappingN2S[new_index]
             self.back_part = last_char + self.back_part
-            
-        self.aStr = (self.front_part + self.back_part)
-        return IncrementableStr(self.aStr)
+        
+        self.checked_input = False # reset for next str checking
+        return  (self.front_part + self.back_part)
 
 
 def test():
     print ''
     s = '5abccyy'
-    t = IncrementableStr(s)
-    t.incr()
-    print(s)
-    print(t)
-#    assert t != '5abcd33'
-#    assert IncrementableStr('83367wab').incr() == '83367wac'
-    
-    
+    ic30 = StrIncr()
+    ic62 = StrIncr(base62_tokens)
+    t = ic30.incr(s)
+    print('base30: s is : %s, t is %s') % (s, t)
+    t = ic62.incr(s)
+    print('base30: s is : %s, t is %s') % (s, t)
+    ic30.incr('odfawlf')
+    ic62.incr('ab8(03-_*/&+yz')
+
 
 if __name__ == '__main__':
     test()
