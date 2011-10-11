@@ -79,18 +79,14 @@ base62_tokens = string.digits + string.letters
 # base64_standard_tokens, http://en.wikipedia.org/wiki/Base64
 # base64_standard_tokens = 'ABCDEFGHJKLMNPQRSTUVWXYabcdefghijklmnopqrstuvwxyz0123456789+/'
 base64_standard_tokens = string.ascii_uppercase + string.ascii_lowercase + string.digits + '+/'
-
+base64_tokens = base64_standard_tokens
 
 default_base_tokens = base30_tokens
-# debug = False
-debug = True
 
 class StrIncr(str):
     ''' make a sequencial string can incr '''
     
     def __init__(self, tokens=default_base_tokens):
-        self.checked_input = False
-
         self.tokens = tokens
         self.base = len(self.tokens)
         self.mappingN2S = {}  # N2S : Number to Str
@@ -98,15 +94,20 @@ class StrIncr(str):
         for i,v in enumerate(self.tokens): 
             self.mappingN2S.update({i : v})
             self.mappingS2N.update({v : i})
+
         self.back_part = ''
         self.front_part = ''
+        self.input_checked = False
+        self.input_valid = False
     
     
     def get_mappingN2S(self):
         return self.mappingN2S
+
     
     def get_mappingS2N(self):
         return self.mappingS2N
+
 
     def is_valid_input(self, aStr):
         ''' check if there is any char of aStr not in tokens '''
@@ -119,6 +120,7 @@ class StrIncr(str):
                 print '-- INPUT ERROR (%d): \' %s\'(\'%s\', index:%d) not in tokens(base%d): [\'%s\'] ' % (count, aStr, v, i, self.base, self.tokens)
                 print '---------------------------------------------------------'
                 is_valid = False
+        self.input_valid = is_valid
         return is_valid
 
 
@@ -126,14 +128,14 @@ class StrIncr(str):
         ''' increment the string: 'aStr' '''
         
         # check input ?
-        if not self.checked_input:
+        if not self.input_checked:
             if not self.is_valid_input(aStr):
                 print '======================================================'
                 print 'INPUT_ERROR:  Please check your input string !'
                 print ' ** I will *NOT CHANGE* your input, just return it ** '
                 print '======================================================'
                 return aStr
-            self.checked_input = True
+            self.input_checked = True
 
         self.front_part = aStr[:-1]
         last_char = aStr[-1]
@@ -141,31 +143,33 @@ class StrIncr(str):
         if new_index >= len(self.tokens):   # a round finished. base30, flip over. 30(base10) turns over to '3'(base30),   increment happens here 
             last_char = self.tokens[0]   # last_char = tokens[first]
             self.back_part = last_char + self.back_part
-#            self.aStr = self.front_part
+
             if self.front_part is '':     # the very-first char, increment, like ' 9 + 1 ==> 10 ', ' y + 1 ==> 3'
                 self.front_part = self.tokens[0]
+                new_str = self.front_part + self.back_part
+                self.clear()
+                return new_str
             else:
-                self.incr(self.front_part)
+                return self.incr(self.front_part)
         else:
             last_char = self.mappingN2S[new_index]
             self.back_part = last_char + self.back_part
-        
-        self.checked_input = False # reset for next str checking
-        return  (self.front_part + self.back_part)
+            new_str = self.front_part + self.back_part
+            self.clear()
+            return new_str
 
-
-def test():
-    print ''
-    s = '5abccyy'
-    ic30 = StrIncr()
-    ic62 = StrIncr(base62_tokens)
-    t = ic30.incr(s)
-    print('base30: s is : %s, t is %s') % (s, t)
-    t = ic62.incr(s)
-    print('base30: s is : %s, t is %s') % (s, t)
-    ic30.incr('odfawlf')
-    ic62.incr('ab8(03-_*/&+yz')
+    def clear(self):
+        # resets
+        self.input_checked = False # reset for next str checking
+        self.front_part = ''
+        self.back_part = ''
 
 
 if __name__ == '__main__':
-    test()
+    print ''
+    b30 = StrIncr()
+#    s = 'ab7cyy'
+    s = 'yyya'
+    print b30.incr(s)
+    print b30.incr(s)
+    print '%s + 1 = %s' % (s, b30.incr(s))
