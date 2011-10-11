@@ -130,7 +130,7 @@ class IncrementableStr(str):
             print '--              Please check your input string !'
             print '--              ** I will *not change* your input, just return it **'
             print '---------------------------------------------------------'
-        return self.aStr
+            return self.aStr
 
         self.front_part = self.aStr[:-1]
         back_part = ''
@@ -148,15 +148,19 @@ class IncrementableStr(str):
             last_char = self.mappingN2S[new_index]
             self.back_part = last_char + self.back_part
             
-        return (self.front_part + self.back_part)
+        self.aStr = (self.front_part + self.back_part)
+        return IncrementableStr(self.aStr)
+
 
 def test():
-    s = '5abzccy0y'
-    t = IncrementableStr(s).incr()
+    print ''
+    s = '5abccyy'
+    t = IncrementableStr(s)
+    t.incr()
     print(s)
     print(t)
-    assert t != '5abcd33'
-    assert IncrementableStr('83367wab').incr() == '83367wac'
+#    assert t != '5abcd33'
+#    assert IncrementableStr('83367wab').incr() == '83367wac'
     
     
 
